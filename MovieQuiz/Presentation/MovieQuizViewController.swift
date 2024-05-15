@@ -24,7 +24,7 @@ struct QuizResultsViewModel {
 final class MovieQuizViewController: UIViewController {
     // MARK: - Properties
     // массив как переменная с mock-данными
-    private let questions: [QuizQuestion] = [
+    private static let questions: [QuizQuestion] = [
         QuizQuestion(
             image: "The Godfather",
             text: "Рейтинг этого фильма\nбольше чем 6?",
@@ -104,15 +104,18 @@ final class MovieQuizViewController: UIViewController {
     
     // MARK: - Private Methods
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
+        guard !MovieQuizViewController.questions.isEmpty else {
+            fatalError("Массив вопросов пуст")
+        }
         let questionStep = QuizStepViewModel(
             image: UIImage(named: model.image) ?? UIImage(),
             question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
+            questionNumber: "\(currentQuestionIndex + 1)/\(MovieQuizViewController.questions.count)")
         return questionStep
     }
     
     private func showNextQuestion() {
-        let question = questions[currentQuestionIndex]
+        let question = MovieQuizViewController.questions[currentQuestionIndex]
         let viewModel = convert(model: question)
         show(quiz: viewModel)
         yesButton.isEnabled = true
@@ -172,7 +175,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func showNextQuestionOrResults() {
-        if currentQuestionIndex == questions.count - 1 {
+        if currentQuestionIndex == MovieQuizViewController.questions.count - 1 {
             yesButton.isEnabled = false
             noButton.isEnabled = false
             showQuizResults()
@@ -185,15 +188,15 @@ final class MovieQuizViewController: UIViewController {
     private func showQuizResults() {
         updateStatistics(withNewScore: correctAnswers)
         
-        let averageAccuracy = Double(totalCorrectAnswers) / Double(totalQuizzesPlayed * questions.count) * 100
+        let averageAccuracy = Double(totalCorrectAnswers) / Double(totalQuizzesPlayed * MovieQuizViewController.questions.count) * 100
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "dd.MM.yy HH:mm"
         let recordDateString = dateFormatter.string(from: highScoreDate)
         
         let resultText = """
-                Ваш результат: \(correctAnswers)/\(questions.count)
+                Ваш результат: \(correctAnswers)/\(MovieQuizViewController.questions.count)
                 Количество сыгранных квизов: \(totalQuizzesPlayed)
-                Рекорд: \(highScore)/\(questions.count) (\(recordDateString))
+                Рекорд: \(highScore)/\(MovieQuizViewController.questions.count) (\(recordDateString))
                 Средняя точность: \(String(format: "%.2f", averageAccuracy))%
                 """
         
@@ -216,7 +219,7 @@ final class MovieQuizViewController: UIViewController {
     
     // MARK: - Actions
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        let currentQuestion = questions[currentQuestionIndex]
+        let currentQuestion = MovieQuizViewController.questions[currentQuestionIndex]
         let givenAnswer = true
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
         yesButton.isEnabled = false
@@ -224,7 +227,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        let currentQuestion = questions[currentQuestionIndex]
+        let currentQuestion = MovieQuizViewController.questions[currentQuestionIndex]
         let givenAnswer = false
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
         yesButton.isEnabled = false
