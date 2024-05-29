@@ -1,50 +1,8 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
+    
     // MARK: - Properties
-    // массив как переменная с mock-данными
-    private let questions: [QuizQuestion] = [
-        QuizQuestion(
-            image: "The Godfather",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Dark Knight",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Kill Bill",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Avengers",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Deadpool",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Green Knight",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Old",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "The Ice Age Adventures of Buck Wild",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "Tesla",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "Vivarium",
-            text: "Рейтинг этого фильма\nбольше чем 6?",
-            correctAnswer: false)
-    ]
     private var currentQuestionIndex = 0  // индекс текущего вопроса
     private var correctAnswers = 0        // счетчик правильных ответов
     private var totalQuizzesPlayed = 0
@@ -52,7 +10,7 @@ final class MovieQuizViewController: UIViewController {
     private var highScore = 0
     private var highScoreDate = Date()
     private let questionsAmount: Int = 10
-    private var questionsFactory: QuestionFactory = QuestionFactory()
+    private var questionFactory: QuestionFactory = QuestionFactory()
     private var currentQuestion: QuizQuestion?
     
     // MARK: - Outlets
@@ -89,14 +47,16 @@ final class MovieQuizViewController: UIViewController {
         let questionStep = QuizStepViewModel(
             image: UIImage(named: model.image) ?? UIImage(),
             question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
+            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
         return questionStep
     }
     
     private func showNextQuestion() {
-        let question = questions[currentQuestionIndex]
-        let viewModel = convert(model: question)
-        show(quiz: viewModel)
+        if let question = self.questionFactory.requestNextQuestion() {
+            currentQuestion = question
+            let viewModel = convert(model: question)
+            show(quiz: viewModel)
+        }
         yesButton.isEnabled = true
         noButton.isEnabled = true
         questionTitleLabel.text = "Вопрос:"
@@ -154,7 +114,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func showNextQuestionOrResults() {
-        if currentQuestionIndex == questions.count - 1 {
+        if currentQuestionIndex == questionsAmount - 1 {
             yesButton.isEnabled = false
             noButton.isEnabled = false
             showQuizResults()
@@ -198,7 +158,9 @@ final class MovieQuizViewController: UIViewController {
     
     // MARK: - Actions
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        let currentQuestion = questions[currentQuestionIndex]
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
         let givenAnswer = true
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
         yesButton.isEnabled = false
@@ -206,7 +168,9 @@ final class MovieQuizViewController: UIViewController {
     }
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        let currentQuestion = questions[currentQuestionIndex]
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
         let givenAnswer = false
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
         yesButton.isEnabled = false

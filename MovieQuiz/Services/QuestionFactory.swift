@@ -11,6 +11,7 @@ protocol QuestionFactoryProtocol {
     func requestNextQuestion() -> QuizQuestion?
 }
 
+// массив как переменная с mock-данными
 class QuestionFactory: QuestionFactoryProtocol {
     private let questions: [QuizQuestion] = [
         QuizQuestion(
