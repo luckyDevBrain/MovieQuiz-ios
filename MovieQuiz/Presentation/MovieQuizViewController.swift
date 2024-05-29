@@ -1,26 +1,5 @@
 import UIKit
 
-// MARK: - ViewModel для "Вопроса квиза"
-struct QuizQuestion {
-    let image: String        // изображение фильма
-    let text: String         // вопрос о рейтинге фильма
-    let correctAnswer: Bool  // правильный ответ на вопрос
-}
-
-// MARK: - ViewModel для состояния "Вопрос показан"
-struct QuizStepViewModel {
-    let image: UIImage          // картинка с афишей фильма
-    let question: String        // вопрос о рейтинге квиза
-    let questionNumber: String  // порядковый номер вопроса (ex. "1/10")
-}
-
-// MARK: - ViewModel для состояния "Результат квиза"
-struct QuizResultsViewModel {
-    let title: String             // заголовок алерта
-    let text: String              // текст о количестве набранных очков
-    let buttonText: String        // текст для кнопки алерта
-}
-
 final class MovieQuizViewController: UIViewController {
     // MARK: - Properties
     // массив как переменная с mock-данными
@@ -72,6 +51,9 @@ final class MovieQuizViewController: UIViewController {
     private var totalCorrectAnswers = 0
     private var highScore = 0
     private var highScoreDate = Date()
+    private let questionsAmount: Int = 10
+    private var questionsFactory: QuestionFactory = QuestionFactory()
+    private var currentQuestion: QuizQuestion?
     
     // MARK: - Outlets
     @IBOutlet private var questionTitleLabel: UILabel!
