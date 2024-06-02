@@ -7,12 +7,11 @@
 
 import Foundation
 
-protocol QuestionFactoryProtocol {
-    func requestNextQuestion() -> QuizQuestion?
-}
-
 // массив как переменная с mock-данными
 class QuestionFactory: QuestionFactoryProtocol {
+    
+    weak var delegate: QuestionFactoryDelegate?
+    
     private let questions: [QuizQuestion] = [
         QuizQuestion(
             image: "The Godfather",
@@ -55,12 +54,18 @@ class QuestionFactory: QuestionFactoryProtocol {
             text: "Рейтинг этого фильма\nбольше чем 6?",
             correctAnswer: false)
     ]
-
-    func requestNextQuestion() -> QuizQuestion? {
-           guard let index = (0..<questions.count).randomElement() else {
-               return nil
-           }
-           return questions[safe: index]
-       }
-   }
-
+    
+    func setup(delegate: QuestionFactoryDelegate) {
+            self.delegate = delegate
+        }
+    
+    func requestNextQuestion() {
+        guard let index = (0..<questions.count).randomElement() else {
+            delegate?.didReceiveNextQuestion(question: nil)
+            return
+        }
+        
+        let question = questions[safe: index]
+        delegate?.didReceiveNextQuestion(question: question)
+    }
+}
