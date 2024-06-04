@@ -7,13 +7,13 @@
 
 import UIKit
 
-class AlertPresenter {
+final class AlertPresenter {
     private weak var viewController: UIViewController?
-
+    
     init(viewController: UIViewController) {
         self.viewController = viewController
     }
-
+    
     func presentAlert(with model: AlertModel) {
         let alert = UIAlertController(title: model.title, message: model.message, preferredStyle: .alert)
         let action = UIAlertAction(title: model.buttonText, style: .default) { _ in
