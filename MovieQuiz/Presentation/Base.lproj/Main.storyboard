@@ -3,7 +3,7 @@
     <device id="retina6_1" orientation="portrait" appearance="dark"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22684"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -94,17 +94,23 @@
                                     </stackView>
                                 </subviews>
                             </stackView>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="179-Co-XgT">
+                                <rect key="frame" x="197" y="438" width="20" height="20"/>
+                            </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" name="YP Black"/>
                         <constraints>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="jlg-cf-vLb" secondAttribute="trailing" constant="20" id="RFv-q8-URs"/>
                             <constraint firstItem="jlg-cf-vLb" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="Z7U-cZ-CwZ"/>
+                            <constraint firstItem="179-Co-XgT" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="ZD2-BG-7hN"/>
                             <constraint firstItem="jlg-cf-vLb" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="nZq-wT-A19"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="jlg-cf-vLb" secondAttribute="bottom" id="oRo-Ey-TyQ"/>
+                            <constraint firstItem="179-Co-XgT" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="rOQ-08-QIg"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="ActivityIndicator" destination="179-Co-XgT" id="e7O-xy-fve"/>
                         <outlet property="indexLabel" destination="hS1-we-h47" id="B8D-TM-cHh"/>
                         <outlet property="noButton" destination="SIY-aI-8Tj" id="Feq-qq-do1"/>
                         <outlet property="previewImage" destination="gsd-mt-oKo" id="Abh-lR-rcI"/>

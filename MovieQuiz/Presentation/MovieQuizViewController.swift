@@ -2,6 +2,65 @@ import UIKit
 
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  {
     
+    func didLoadDataFromServer() {
+        showLoadingIndicator() // Показывваем индикатор загрузки
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: NetworkClient.NetworkErrors) {
+        DispatchQueue.main.async { [weak self] in
+            self?.hideLoadingIndicator()
+            let errorCompletion = {
+                self?.currentQuestionIndex = 0
+                self?.correctAnswers = 0
+                self?.showLoadingIndicator()
+                self?.questionFactory?.loadData()
+            }
+            
+            let errorMessage: String
+            switch error {
+            case .codeError(let statusCode):
+                errorMessage = "Ошибка HTTP с кодом \(statusCode)"
+            case .invalidAPIKey(let message):
+                errorMessage = "Неверный API ключ: \(message)"
+            case .loadImageError(let message):
+                errorMessage = "Ошибка загрузки изображения: \(message)"
+            case .unexpectedResponse:
+                errorMessage = "Неожиданный ответ сервера"
+            }
+            
+            let alertModel = AlertModel(
+                title: "Ошибка",
+                message: errorMessage,
+                buttonText: "Попробовать еще раз",
+                completion: errorCompletion
+            )
+            self?.alertPresenter?.presentAlert(with: alertModel)
+        }
+    }
+    
+    func willLoadNextQuestion() {
+        showLoadingIndicator()
+    }
+    
+    func didFailLoadingImage(with error: NetworkClient.NetworkErrors) {
+        hideLoadingIndicator()
+        showAlert(with: error)
+    }
+    
+    private func showAlert(with error: NetworkClient.NetworkErrors) {
+        let alertModel = AlertModel(
+            title: "Ошибка загрузки",
+            message: error.localizedDescription,
+            buttonText: "OK",
+            completion: { [weak self] in
+                self?.questionFactory?.loadData() // Попытка перезагрузить данные
+            }
+        )
+        alertPresenter?.presentAlert(with: alertModel)
+    }
+    
+    
     // MARK: - Properties
     private var currentQuestionIndex = 0  // индекс текущего вопроса
     private var correctAnswers = 0        // счетчик правильных ответов
@@ -18,6 +77,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  
     @IBOutlet private var questionLabel: UILabel!
     @IBOutlet private var noButton: UIButton!
     @IBOutlet private var yesButton: UIButton!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -25,15 +85,22 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  
         setupButtons()
         questionLabel.numberOfLines = 0
         
-        let questionFactory = QuestionFactory()
-        questionFactory.setup(delegate: self)
-        self.questionFactory = questionFactory
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         alertPresenter = AlertPresenter(viewController: self)
-        showNextQuestion()
+        
+        //showNextQuestion()
+        showLoadingIndicator()
+        questionFactory?.loadData()
+    }
+    
+    // Переопределение preferredStatusBarStyle для изменения цвета элементов статусбара
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
     }
     
     // MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
+        hideLoadingIndicator() // Скрываем индикатор загрузки
         guard let question = question else {
             showQuizResults()
             return
@@ -64,7 +131,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  
     // MARK: - Private Methods
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
         return questionStep
@@ -148,6 +215,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  
         }
     }
     
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false // говорим, что индикатор загрузки не скрыт
+        activityIndicator.startAnimating() // включаем анимацию
+    }
+    
+    private func hideLoadingIndicator() {
+        activityIndicator.stopAnimating() // Останавливаем анимацию индикатора
+        activityIndicator.isHidden = true // Скрываем индикатор загрузки
+    }
+    
+    
     // MARK: - Actions
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else { return }
@@ -165,6 +243,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  
         noButton.isEnabled = false
     }
 }
+
+
 
 /*
  Картинка: The Godfather
@@ -225,4 +305,4 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  
  Настоящий рейтинг: 5,8
  Вопрос: Рейтинг этого фильма больше чем 6?
  Ответ: НЕТ
-*/
+ */

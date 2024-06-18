@@ -9,7 +9,10 @@ import Foundation
 
 // MARK: - ViewModel для "Вопроса квиза"
 struct QuizQuestion {
-    let image: String        // изображение фильма
+    let image: Data          // изображение фильма
     let text: String         // вопрос о рейтинге фильма
     let correctAnswer: Bool  // правильный ответ на вопрос
 }
+
+
+
