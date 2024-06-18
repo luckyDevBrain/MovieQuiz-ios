@@ -39,19 +39,16 @@ final class QuestionFactory: QuestionFactoryProtocol {
     }
     
     func requestNextQuestion() {
+        delegate?.willLoadNextQuestion() // Уведомление делегата перед началом загрузки
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
             let index = (0..<self.movies.count).randomElement() ?? 0
-            
             guard let movie = self.movies[safe: index] else { return }
             
-            var imageData = Data()
-            
-            do {
-                imageData = try Data(contentsOf: movie.resizedImageURL)
-            } catch {
-                print("Failed to load image")
-            }
+            self.loadImage(for: movie) { result in
+                        switch result {
+                        case .success(let imageData):
+                            // Создание вопроса и уведомление делегата
             
             let ratingThreshold = Float.random(in: 5.0...9.0)
             let ratingThresholdString = String(format: "%.1f", ratingThreshold)
@@ -66,84 +63,30 @@ final class QuestionFactory: QuestionFactoryProtocol {
                                         text: text,
                                         correctAnswer: correctAnswer)
             
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                self.delegate?.didReceiveNextQuestion(question: question)
-            }
-        }
-    }
+                            DispatchQueue.main.async {
+                                                self.delegate?.didReceiveNextQuestion(question: question)
+                                            }
+                                        case .failure(let error):
+                                            DispatchQueue.main.async {
+                                                self.delegate?.didFailLoadingImage(with: error) // Уведомление делегата об ошибке
+                                            }
+                                        }
+                                    }
+                                }
+                            }
     
-    private func loadImage(for movie: MostPopularMovie, completion: @escaping (Data) -> Void) {
+    private func loadImage(for movie: MostPopularMovie, completion: @escaping (Result<Data, NetworkClient.NetworkErrors>) -> Void) {
         DispatchQueue.global().async {
-            var imageData = Data()
             do {
-                imageData = try Data(contentsOf: movie.resizedImageURL)
+                let imageData = try Data(contentsOf: movie.resizedImageURL)
+                DispatchQueue.main.async {
+                    completion(.success(imageData))
+                }
             } catch {
-                print("Failed to load image")
+                DispatchQueue.main.async {
+                    completion(.failure(.loadImageError(error.localizedDescription)))
+                }
             }
-            completion(imageData)
         }
     }
 }
-
-// массив как переменная с mock-данными
-/*
- private let questions: [QuizQuestion] = [
- QuizQuestion(
- image: "The Godfather",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: true),
- QuizQuestion(
- image: "The Dark Knight",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: true),
- QuizQuestion(
- image: "Kill Bill",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: true),
- QuizQuestion(
- image: "The Avengers",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: true),
- QuizQuestion(
- image: "Deadpool",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: true),
- QuizQuestion(
- image: "The Green Knight",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: true),
- QuizQuestion(
- image: "Old",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: false),
- QuizQuestion(
- image: "The Ice Age Adventures of Buck Wild",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: false),
- QuizQuestion(
- image: "Tesla",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: false),
- QuizQuestion(
- image: "Vivarium",
- text: "Рейтинг этого фильма\nбольше чем 6?",
- correctAnswer: false)
- ]
- */
-
-/*
- func setup(delegate: QuestionFactoryDelegate) {
- self.delegate = delegate
- }
- 
- func requestNextQuestion() {
- guard let index = (0..<questions.count).randomElement() else {
- delegate?.didReceiveNextQuestion(question: nil)
- return
- }
- 
- let question = questions[safe: index]
- delegate?.didReceiveNextQuestion(question: question)
- }
- */

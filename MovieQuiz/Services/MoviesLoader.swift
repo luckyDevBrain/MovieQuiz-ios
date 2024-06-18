@@ -41,7 +41,8 @@ struct MoviesLoader: MoviesLoading {
                 }
             case .failure(let error):
                 // Передача ошибки от NetworkClient
-                handler(.failure(error))
+                let networkError = networkClient.handleNetworkError(error)
+                handler(.failure(networkError))
             }
         }
     }

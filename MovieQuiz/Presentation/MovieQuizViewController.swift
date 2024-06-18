@@ -1,42 +1,64 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  {
+    
     func didLoadDataFromServer() {
-        activityIndicator.isHidden = true // скрываем индикатор загрузки
+        showLoadingIndicator() // Показывваем индикатор загрузки
         questionFactory?.requestNextQuestion()
     }
     
     func didFailToLoadData(with error: NetworkClient.NetworkErrors) {
         DispatchQueue.main.async { [weak self] in
-               self?.hideLoadingIndicator()
-               let errorCompletion = {
-                   self?.currentQuestionIndex = 0
-                   self?.correctAnswers = 0
-                   self?.showLoadingIndicator()
-                   self?.questionFactory?.loadData()
-               }
-               
-               let errorMessage: String
-               switch error {
-               case .codeError(let statusCode):
-                   errorMessage = "Ошибка HTTP с кодом \(statusCode)"
-               case .invalidAPIKey(let message):
-                   errorMessage = "Неверный API ключ: \(message)"
-               case .loadImageError(let message):
-                   errorMessage = "Ошибка загрузки изображения: \(message)"
-               case .unexpectedResponse:
-                   errorMessage = "Неожиданный ответ сервера"
-               }
-               
-               let alertModel = AlertModel(
-                   title: "Ошибка",
-                   message: errorMessage,
-                   buttonText: "Попробовать еще раз",
-                   completion: errorCompletion
-               )
-               self?.alertPresenter?.presentAlert(with: alertModel)
-           }
-       }
+            self?.hideLoadingIndicator()
+            let errorCompletion = {
+                self?.currentQuestionIndex = 0
+                self?.correctAnswers = 0
+                self?.showLoadingIndicator()
+                self?.questionFactory?.loadData()
+            }
+            
+            let errorMessage: String
+            switch error {
+            case .codeError(let statusCode):
+                errorMessage = "Ошибка HTTP с кодом \(statusCode)"
+            case .invalidAPIKey(let message):
+                errorMessage = "Неверный API ключ: \(message)"
+            case .loadImageError(let message):
+                errorMessage = "Ошибка загрузки изображения: \(message)"
+            case .unexpectedResponse:
+                errorMessage = "Неожиданный ответ сервера"
+            }
+            
+            let alertModel = AlertModel(
+                title: "Ошибка",
+                message: errorMessage,
+                buttonText: "Попробовать еще раз",
+                completion: errorCompletion
+            )
+            self?.alertPresenter?.presentAlert(with: alertModel)
+        }
+    }
+    
+    func willLoadNextQuestion() {
+        showLoadingIndicator()
+    }
+    
+    func didFailLoadingImage(with error: NetworkClient.NetworkErrors) {
+        hideLoadingIndicator()
+        showAlert(with: error)
+    }
+    
+    private func showAlert(with error: NetworkClient.NetworkErrors) {
+        let alertModel = AlertModel(
+            title: "Ошибка загрузки",
+            message: error.localizedDescription,
+            buttonText: "OK",
+            completion: { [weak self] in
+                self?.questionFactory?.loadData() // Попытка перезагрузить данные
+            }
+        )
+        alertPresenter?.presentAlert(with: alertModel)
+    }
     
     
     // MARK: - Properties
@@ -73,11 +95,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  
     
     // Переопределение preferredStatusBarStyle для изменения цвета элементов статусбара
     override var preferredStatusBarStyle: UIStatusBarStyle {
-            return .lightContent
-        }
+        return .lightContent
+    }
     
     // MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
+        hideLoadingIndicator() // Скрываем индикатор загрузки
         guard let question = question else {
             showQuizResults()
             return
@@ -282,4 +305,4 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate  
  Настоящий рейтинг: 5,8
  Вопрос: Рейтинг этого фильма больше чем 6?
  Ответ: НЕТ
-*/
+ */
