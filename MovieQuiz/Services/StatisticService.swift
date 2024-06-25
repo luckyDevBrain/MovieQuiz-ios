@@ -28,12 +28,12 @@ final class StatisticService: StatisticServiceProtocol {
         }
     }
     
-    var bestGame: GameResult {
+    var bestGame: GameRecord {
         get {
             let correct = storage.integer(forKey: Keys.bestGameCorrect)
             let total = storage.integer(forKey: Keys.bestGameTotal)
             let date = storage.object(forKey: Keys.bestGameDate) as? Date ?? Date()
-            return GameResult(correct: correct, total: total, date: date)
+            return GameRecord(correct: correct, total: total, date: date)
         }
         set {
             storage.set(newValue.correct, forKey: Keys.bestGameCorrect)
@@ -52,7 +52,7 @@ final class StatisticService: StatisticServiceProtocol {
     func store(correct count: Int, total amount: Int) {
         gamesCount += 1
         
-        let newResult = GameResult(correct: count, total: amount, date: Date())
+        let newResult = GameRecord(correct: count, total: amount, date: Date())
         if newResult.isBetterThan(bestGame) {
             bestGame = newResult
         }

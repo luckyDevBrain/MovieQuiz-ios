@@ -8,42 +8,60 @@
 import Foundation
 
 protocol MoviesLoading {
-    func loadMovies(handler: @escaping (Result<MostPopularMovies, NetworkClient.NetworkErrors>) -> Void)
+    func loadMovies(handler: @escaping (Result<MostPopularMovies, Error>) -> Void)
 }
 
 struct MoviesLoader: MoviesLoading {
     // MARK: - NetworkClient
-    private let networkClient = NetworkClient()
+    private let networkClient: NetworkRouting
+    
+    init(networkClient: NetworkRouting = NetworkClient()) {
+        self.networkClient = networkClient
+    }
     
     // MARK: - URL
     private var mostPopularMoviesUrl: URL {
-        // Если мы не смогли преобразовать строку в URL, то приложение упадёт с ошибкой
         guard let url = URL(string: "https://tv-api.com/en/API/Top250Movies/k_zcuw1ytf") else {
             preconditionFailure("Unable to construct mostPopularMoviesUrl")
         }
         return url
     }
     
-    func loadMovies(handler: @escaping (Result<MostPopularMovies, NetworkClient.NetworkErrors>) -> Void) {
+    func loadMovies(handler: @escaping (Result<MostPopularMovies, Error>) -> Void) {
         networkClient.fetch(url: mostPopularMoviesUrl) { result in
             switch result {
             case .success(let data):
                 do {
                     let mostPopularMovies = try JSONDecoder().decode(MostPopularMovies.self, from: data)
-                    if !mostPopularMovies.errorMessage.isEmpty {
-                        handler(.failure(.invalidAPIKey(mostPopularMovies.errorMessage)))
-                    } else {
-                        handler(.success(mostPopularMovies))
-                    }
+                    handler(.success(mostPopularMovies))
                 } catch {
-                    // Обработка ошибки декодирования
-                    handler(.failure(.codeError(0)))
+                    handler(.failure(error))
                 }
             case .failure(let error):
-                // Передача ошибки от NetworkClient
-                let networkError = networkClient.handleNetworkError(error)
-                handler(.failure(networkError))
+                if let networkError = error as? NetworkError {
+                    self.handleNetworkError(networkError, handler: handler)
+                } else {
+                    handler(.failure(error))
+                }
             }
         }
+    }
+    
+    private func handleNetworkError(_ error: NetworkError, handler: @escaping (Result<MostPopularMovies, Error>) -> Void) {
+        // Обработка ошибок сети и вызов обработчика с ошибкой
+        let errorMessage: String
+        switch error {
+        case .codeError(let statusCode):
+            errorMessage = "Ошибка HTTP с кодом \(statusCode)"
+        case .invalidAPIKey(let message):
+            errorMessage = "Неверный API ключ: \(message)"
+        case .loadImageError(let message):
+            errorMessage = "Ошибка загрузки изображения: \(message)"
+        case .unexpectedResponse:
+            errorMessage = "Неожиданный ответ сервера"
+        case .customError(let message):
+            errorMessage = message
+        }
+        handler(.failure(NetworkError.customError(errorMessage)))
     }
 }
