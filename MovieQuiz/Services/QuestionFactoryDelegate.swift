@@ -9,8 +9,8 @@ import Foundation
 
 protocol QuestionFactoryDelegate: AnyObject {
     func didLoadDataFromServer() // сообщение об успешной загрузке
-    func didFailToLoadData(with error: NetworkClient.NetworkErrors) // сообщение об ошибке загрузки
+    func didFailToLoadData(with error: Error) // сообщение об ошибке загрузки
     func willLoadNextQuestion()
-    func didFailLoadingImage(with error: NetworkClient.NetworkErrors)
+    func didFailLoadingImage(with error: Error)
     func didReceiveNextQuestion(question: QuizQuestion?)
 }
