@@ -77,30 +77,30 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     
     func didFailLoadingImage(with error: Error) {
         self.viewController?.hideLoadingIndicator()
-            let errorMessage: String
-            switch error {
-            case NetworkError.codeError(let statusCode):
-                errorMessage = "Ошибка HTTP с кодом \(statusCode)"
-            case NetworkError.invalidAPIKey(let message):
-                errorMessage = "Неверный API ключ: \(message)"
-            case NetworkError.loadImageError(let message):
-                errorMessage = "Ошибка загрузки изображения: \(message)"
-            case NetworkError.unexpectedResponse:
-                errorMessage = "Неожиданный ответ сервера"
-            default:
-                errorMessage = error.localizedDescription
-            }
-            
-            let alertModel = AlertModel(
-                title: "Ошибка",
-                message: errorMessage,
-                buttonText: "Попробовать еще раз",
-                completion: { [weak self] in
-                    self?.questionFactory?.loadData() // Попытка перезагрузить данные
-                }
-            )
-        self.alertPresenter?.presentAlert(with: alertModel) // Используем AlertPresenter для показа алерта
+        let errorMessage: String
+        switch error {
+        case NetworkError.codeError(let statusCode):
+            errorMessage = "Ошибка HTTP с кодом \(statusCode)"
+        case NetworkError.invalidAPIKey(let message):
+            errorMessage = "Неверный API ключ: \(message)"
+        case NetworkError.loadImageError(let message):
+            errorMessage = "Ошибка загрузки изображения: \(message)"
+        case NetworkError.unexpectedResponse:
+            errorMessage = "Неожиданный ответ сервера"
+        default:
+            errorMessage = error.localizedDescription
         }
+        
+        let alertModel = AlertModel(
+            title: "Ошибка",
+            message: errorMessage,
+            buttonText: "Попробовать еще раз",
+            completion: { [weak self] in
+                self?.questionFactory?.loadData() // Попытка перезагрузить данные
+            }
+        )
+        self.alertPresenter?.presentAlert(with: alertModel) // Используем AlertPresenter для показа алерта
+    }
     
     func isLastQuestion() -> Bool {
         currentQuestionIndex == questionsAmount - 1
@@ -166,6 +166,9 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     
     private func proceedToNextQuestionOrResults() {
         if self.isLastQuestion() {
+            // Сохраняем статистику игры перед созданием сообщения с результатами
+            storeGameStatistics()
+            
             let text = "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
             
             let viewModel = QuizResultsViewModel(
@@ -179,9 +182,11 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         }
     }
     
-    func makeResultsMessage() -> String {
+    private func storeGameStatistics() {
         statisticService.store(correct: correctAnswers, total: questionsAmount)
-        
+    }
+    
+    func makeResultsMessage() -> String {
         let bestGame = statisticService.bestGame
         
         return """
@@ -192,7 +197,3 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
             """
     }
 }
-
-
-
-

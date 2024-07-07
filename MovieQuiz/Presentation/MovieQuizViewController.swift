@@ -21,6 +21,8 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
         setupButtons()
         questionLabel.numberOfLines = 0
         activityIndicator.hidesWhenStopped = true
+        activityIndicator.color = .black // Изменим цвет индикатора на черный
+        activityIndicator.style = .large // Изменим стиль индикатора на большой
         
         alertPresenter = AlertPresenter(viewController: self)
         presenter = MovieQuizPresenter(viewController: self)
@@ -56,19 +58,18 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     func show(quiz result: QuizResultsViewModel) {
         let message = presenter.makeResultsMessage()
         
-        let alert = UIAlertController(
+        // Создаем модель данных для алерта
+        let alertModel = AlertModel(
             title: result.title,
             message: message,
-            preferredStyle: .alert)
+            buttonText: result.buttonText,
+            completion: { [weak self] in
+                self?.presenter.restartGame()
+            }
+        )
         
-        alert.view.accessibilityIdentifier = "Game results"
-        
-        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
-            guard let self = self else { return }
-            self.presenter.restartGame()
-        }
-        alert.addAction(action)
-        self.present(alert, animated: true, completion: nil)
+        // Используем alertPresenter для отображения алерта
+        presentAlert(with: alertModel)
     }
     
     func resetImageBorder() {
